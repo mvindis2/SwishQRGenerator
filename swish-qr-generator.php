@@ -78,10 +78,14 @@ function swish_qr_form_shortcode() {
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
         if (isMobile) {
-            // Skapa Swish URL
-            const swishUrl = `swish://payment?amount=${amount}&message=${encodeURIComponent(form.firstname.value)}%20${encodeURIComponent(form.lastname.value)}&recipient=${swishNumber}`;
-
-            // Öppna Swish-appen
+            const swishData = {
+                version: "1.0",
+                payee: { value: swishNumber },
+                amount: { value: parseFloat(amount).toFixed(2) },
+                message: { value: `${form.firstname.value} ${form.lastname.value}` }
+            };
+            
+            const swishUrl = `swish://payment?data=${encodeURIComponent(JSON.stringify(swishData))}`;
             window.location.href = swishUrl;
         } else {
             // Visa popupfönstret för QR-kod
