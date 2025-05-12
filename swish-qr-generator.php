@@ -68,30 +68,7 @@ function swish_qr_form_shortcode() {
         const form = e.target;
 
         // Hämta värden från formuläret
-        const amount = form.amount.value;
-        const mobile = form.mobile.value;
-
-        // Hämta Swish-numret från PHP
-        const swishNumber = '<?php echo esc_js(get_option("swish_qr_payee_number", "0123456789")); ?>';
-
-        // Kontrollera om användaren är på en mobil enhet
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-        if (isMobile) {
-            const swishData = {
-                version: "1.0",
-                payee: { value: swishNumber },
-                amount: { value: parseFloat(amount).toFixed(2) },
-                message: { value: `${form.firstname.value} ${form.lastname.value}` }
-            };
-            
-            const swishUrl = `swish://payment?data=${encodeURIComponent(JSON.stringify(swishData))}`;
-            window.location.href = swishUrl;
-        } else {
-            // Visa popupfönstret för QR-kod
-            document.getElementById('qr-modal').style.display = 'flex';
-
-            const data = {
+        const data = {
                 firstname: form.firstname.value,
                 lastname: form.lastname.value,
                 address: form.address.value,
@@ -103,6 +80,26 @@ function swish_qr_form_shortcode() {
                 magazine: form.magazine ? (form.magazine.checked ? 'Ja' : 'Nej') : 'Nej'
             };
 
+        // Hämta Swish-numret från PHP
+        const swishNumber = '<?php echo esc_js(get_option("swish_qr_payee_number", "0123456789")); ?>';
+
+        // Kontrollera om användaren är på en mobil enhet
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            const swishData = {
+                version: "1.0",
+                payee: { value: swishNumber },
+                amount: { value: parseFloat(data.amount).toFixed(2) },
+                message: { value: `${data.firstname} ${data.lastname}` }
+            };
+            
+            const swishUrl = `swish://payment?data=${encodeURIComponent(JSON.stringify(swishData))}`;
+            window.location.href = swishUrl;
+        } else {
+            // Visa popupfönstret för QR-kod
+            document.getElementById('qr-modal').style.display = 'flex';
+            
             // Skicka data till servern för att generera QR-kod
             fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=generate_swish_qr', {
                 method: 'POST',
@@ -118,6 +115,22 @@ function swish_qr_form_shortcode() {
             })
             .catch(err => alert("Kunde inte generera QR-kod"));
         }
+
+        //Skicka e-postnotifiering till admin
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=send_admin_notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (!result.success) {
+                console.error('Kunde inte skicka admin notifiering');
+            }
+        })
+        .catch(error => {
+            console.error('Fel vid skickande av admin notifiering:', error);
+        });
     });
     </script>
     <?php
@@ -127,6 +140,8 @@ function swish_qr_form_shortcode() {
 // Registrera AJAX-hanterare för både inloggade och icke-inloggade användare
 add_action('wp_ajax_generate_swish_qr', 'handle_swish_qr_request');
 add_action('wp_ajax_nopriv_generate_swish_qr', 'handle_swish_qr_request');
+add_action('wp_ajax_send_admin_notification', 'handle_admin_notification');
+add_action('wp_ajax_nopriv_send_admin_notification', 'handle_admin_notification');
 
 // Funktion för att formatera mobilnummer
 function format_mobile_number($mobile) {
@@ -148,6 +163,27 @@ function format_postal_code($postal_code) {
         return substr($postal_code, 0, 3) . ' ' . substr($postal_code, 3, 2);
     }
     return $postal_code; // Returnera oformaterat om det inte är 5 siffror
+}
+
+// Funktion för att skicka e-postnotifiering till admin
+function send_admin_notification($data) {
+    $admin_email = get_option('swish_qr_admin_email', 'admin@epost.se');
+    
+    $subject = "Ny Swish-betalning mottagen";
+    
+    $message = "En ny Swish-betalning har registrerats med följande information:\n\n";
+    $message .= "Namn: " . $data['firstname'] . " " . $data['lastname'] . "\n";
+    $message .= "Adress: " . $data['address'] . "\n";
+    $message .= "Postnummer: " . format_postal_code($data['postal_code']) . "\n";
+    $message .= "Stad: " . $data['city'] . "\n";
+    $message .= "Mobilnummer: " . format_mobile_number($data['mobile']) . "\n";
+    $message .= "E-post: " . $data['email'] . "\n";
+    $message .= "Tidning: " . $data['magazine'] . "\n";
+    $message .= "Belopp: " . $data['amount'] . " kr\n";
+    
+    $headers = array('Content-Type: text/plain; charset=UTF-8');
+    
+    return wp_mail($admin_email, $subject, $message, $headers);
 }
 
 /**
@@ -197,23 +233,17 @@ function handle_swish_qr_request() {
     $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     curl_close($ch);
 
-    // Skicka e-postnotifiering till admin
-    $formatted_mobile = format_mobile_number($mobile);
-    $formatted_postal_code = format_postal_code($postal_code);
-    $subject = "Ny Swish QR-kod genererad";
-    $message = "En användare har genererat en QR-kod:\n\n"
-    . "Namn: $name\n"
-    . "Adress: $address, $formatted_postal_code $city\n"
-    . "Telefon: $formatted_mobile\n"
-    . "E-post: $email\n"
-    . "Tidning: $magazine\n"
-    . "Belopp: $amount kr";
-    wp_mail($admin_email, $subject, $message, ['Content-Type: text/plain; charset=UTF-8']);
-
     // Returnera QR-koden till klienten
     header("Content-Type: $contentType");
     echo $response;
     wp_die();
+}
+
+// Funktion för att hantera admin notifiering via AJAX
+function handle_admin_notification() {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $result = send_admin_notification($data);
+    wp_send_json(['success' => $result]);
 }
 
 // Inställningar i adminpanelen
