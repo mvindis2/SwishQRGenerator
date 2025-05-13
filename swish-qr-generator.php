@@ -43,6 +43,33 @@ function swish_qr_form_shortcode() {
           <label><input type="radio" name="amount" value="<?php echo esc_attr($amount); ?>" <?php echo $checked; ?> required> <?php echo esc_html($amount); ?> kr</label>
           <?php endforeach; ?>
           <br>
+          <label><input type="radio" name="amount" value="custom"> Valfritt belopp</label><br>
+          <input type="number" name="custom_amount" placeholder="Ange belopp" style="width: 100%;" min="1" readonly>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const amountRadios = document.querySelectorAll('input[name="amount"]');
+                const customAmountField = document.querySelector('input[name="custom_amount"]');
+                
+                amountRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.value === 'custom') {
+                            customAmountField.required = true;
+                            customAmountField.readOnly = true;
+                        } else {
+                            customAmountField.required = false;
+                            customAmountField.readOnly = false;
+                        }
+                    });
+                });
+
+                customAmountField.addEventListener('input', function() {
+                    if (this.value) {
+                        document.querySelector('input[value="custom"]').checked = true;
+                    }
+                });
+            });
+          </script>
+          <br>
           <br>
           <?php if ($show_magazine == '1'): ?>
           <input type="checkbox" name="magazine"> Jag/vi vill ha tidningen<br><br>
