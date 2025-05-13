@@ -25,6 +25,15 @@ function swish_qr_form_shortcode() {
     if (!is_array($amount_options) || empty($amount_options)) {
         $amount_options = $default_amount_options;
     }
+
+    // Enqueue JavaScript file
+    wp_enqueue_script('swish-qr-generator', plugins_url('swish-qr-generator.js', __FILE__), array(), '1.0', true);
+    
+    // Add necessary data for JavaScript
+    wp_localize_script('swish-qr-generator', 'swishQRData', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'swishNumber' => get_option('swish_qr_payee_number', '0123456789')
+    ));
     ?>
     <div style="display: flex; justify-content: center; align-items: flex-start;">
         <form id="swish-form" style="width: 420px; margin: 0 auto;">
@@ -60,79 +69,6 @@ function swish_qr_form_shortcode() {
             <button onclick="document.getElementById('qr-modal').style.display='none'">Stäng</button>
         </div>
     </div>
-
-    <!-- JavaScript för att hantera formulärsubmit och visa QR-kod -->
-    <script>
-    document.getElementById('swish-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const form = e.target;
-
-        // Hämta värden från formuläret
-        const data = {
-                firstname: form.firstname.value,
-                lastname: form.lastname.value,
-                address: form.address.value,
-                city: form.city.value,
-                postal_code: form.postal_code.value,
-                mobile: form.mobile.value,
-                email: form.email.value,
-                amount: form.amount.value,
-                magazine: form.magazine ? (form.magazine.checked ? 'Ja' : 'Nej') : 'Nej'
-            };
-
-        // Hämta Swish-numret från PHP
-        const swishNumber = '<?php echo esc_js(get_option("swish_qr_payee_number", "0123456789")); ?>';
-
-        // Kontrollera om användaren är på en mobil enhet
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-        if (isMobile) {
-            const swishData = {
-                version: "1.0",
-                payee: { value: swishNumber },
-                amount: { value: parseFloat(data.amount).toFixed(2) },
-                message: { value: `${data.firstname} ${data.lastname}` }
-            };
-            
-            const swishUrl = `swish://payment?data=${encodeURIComponent(JSON.stringify(swishData))}`;
-            window.location.href = swishUrl;
-        } else {
-            // Visa popupfönstret för QR-kod
-            document.getElementById('qr-modal').style.display = 'flex';
-            
-            // Skicka data till servern för att generera QR-kod
-            fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=generate_swish_qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => {
-                if (!res.ok) throw new Error("Fel vid generering");
-                return res.blob();
-            })
-            .then(blob => {
-                document.getElementById('qr-image').src = URL.createObjectURL(blob);
-            })
-            .catch(err => alert("Kunde inte generera QR-kod"));
-        }
-
-        //Skicka e-postnotifiering till admin
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=send_admin_notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (!result.success) {
-                console.error('Kunde inte skicka admin notifiering');
-            }
-        })
-        .catch(error => {
-            console.error('Fel vid skickande av admin notifiering:', error);
-        });
-    });
-    </script>
     <?php
     return ob_get_clean();
 }
@@ -168,11 +104,11 @@ function format_postal_code($postal_code) {
 // Funktion för att skicka e-postnotifiering till admin
 function send_admin_notification($data) {
     $admin_email = get_option('swish_qr_admin_email', 'admin@epost.se');
+    $full_name = $data['firstname'] . " " . $data['lastname'];
+    $subject = "Ny Swish-betalning initierad";
     
-    $subject = "Ny Swish-betalning mottagen";
-    
-    $message = "En ny Swish-betalning har registrerats med följande information:\n\n";
-    $message .= "Namn: " . $data['firstname'] . " " . $data['lastname'] . "\n";
+    $message = "En ny Swish-betalning har initierats med följande information:\n\n";
+    $message .= "Namn: " . $full_name . "\n";
     $message .= "Adress: " . $data['address'] . "\n";
     $message .= "Postnummer: " . format_postal_code($data['postal_code']) . "\n";
     $message .= "Stad: " . $data['city'] . "\n";
@@ -294,7 +230,7 @@ function swish_qr_settings_init() {
  */
 function swish_qr_admin_email_render() {
     $value = get_option('swish_qr_admin_email', '');
-    echo "<input type='email' name='swish_qr_admin_email' value='" . esc_attr($value) . "' required />";
+    echo "<input type='email' name='swish_qr_admin_email' value='" . esc_attr($value) . "' style='width: 400px;' required />";
 }
 
 /**
@@ -331,7 +267,7 @@ function swish_qr_amount_options_render() {
     
     foreach ($options as $index => $amount) {
         echo '<div class="amount-option">';
-        echo '<input type="text" name="swish_qr_amount_options[]" value="' . esc_attr($amount) . '" placeholder="Belopp" style="width: 90px;" /> ';
+        echo '<input type="text" name="swish_qr_amount_options[]" value="' . esc_attr($amount) . '" placeholder="Belopp" style="width: 90px;" required /> ';
         echo '<button type="button" class="button button-small remove-option" style="width: 54px; height: 30px;">Ta bort</button><br><br>';
         echo '</div>';
     }
@@ -348,7 +284,7 @@ function swish_qr_amount_options_render() {
         // Lägg till ett nytt beloppsalternativ
         $('#add-amount-option').on('click', function() {
             var newOption = $('<div class="amount-option"></div>');
-            newOption.append('<input type="text" name="swish_qr_amount_options[]" placeholder="Belopp" style="width: 90px;" /> ');
+            newOption.append('<input type="text" name="swish_qr_amount_options[]" placeholder="Belopp" style="width: 90px;" required /> ');
             newOption.append('<button type="button" class="button button-small remove-option" style="width: 54px; height: 30px;">Ta bort</button><br><br>');
             container.append(newOption);
         });
