@@ -76,11 +76,7 @@ function swish_qr_form_shortcode() {
         <div id="payment-info" style="margin-top: 10px; margin-bottom: 10px;">
             <p style="margin: 0; font-size: 12px;" id="membership-fee">Minsta belopp för privatpersoner är <?php echo esc_attr($min_amount_private); ?>kr</p>
         </div>
-        <br>
-        <?php if ($show_magazine == '1'): ?>
-        <input type="checkbox" name="magazine"> Jag/vi vill ha tidningen<br><br>
-        <?php endif; ?>
-
+        <br>        
         <input type="text" name="firstname" placeholder="Förnamn" required style="width: 49%;">
         <input type="text" name="lastname" placeholder="Efternamn" required style="width: 49%; float: right;"><br>
         <input type="text" name="address" placeholder="Adress" required style="width: 100%;"><br>
@@ -88,6 +84,10 @@ function swish_qr_form_shortcode() {
         <input type="text" name="city" placeholder="Stad" required style="width: 49%; float: right;"><br>
         <input type="tel" name="mobile" placeholder="Mobilnummer" required style="width: 100%;"><br>
         <input type="email" name="email" placeholder="E-post" required style="width: 100%;"><br>
+        <br>
+        <?php if ($show_magazine == '1'): ?>
+        <input type="checkbox" name="magazine"> Jag/vi vill ha tidningen<br>
+        <?php endif; ?>
         <br>
         <button type="submit" style="width: 100%; height: 45px;">Till betalning</button>
         </form>
