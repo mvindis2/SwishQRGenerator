@@ -77,13 +77,13 @@ function swish_qr_form_shortcode() {
             <p style="margin: 0; font-size: 12px;" id="membership-fee">Minsta belopp för privatpersoner är <?php echo esc_attr($min_amount_private); ?>kr</p>
         </div>
         <br>        
-        <input type="text" name="firstname" placeholder="Förnamn" required style="width: 49%;">
-        <input type="text" name="lastname" placeholder="Efternamn" required style="width: 49%; float: right;"><br>
-        <input type="text" name="address" placeholder="Adress" required style="width: 100%;"><br>
-        <input type="text" name="postal_code" placeholder="Postnummer" required style="width: 49%;">
-        <input type="text" name="city" placeholder="Stad" required style="width: 49%; float: right;"><br>
-        <input type="tel" name="mobile" placeholder="Mobilnummer" required style="width: 100%;"><br>
-        <input type="email" name="email" placeholder="E-post" required style="width: 100%;"><br>
+        <input type="text" name="firstname" placeholder="Förnamn" required oninvalid="this.setCustomValidity('Fyll i ditt förnamn')" oninput="this.setCustomValidity('')" style="width: 49%;">
+        <input type="text" name="lastname" placeholder="Efternamn" required oninvalid="this.setCustomValidity('Fyll i ditt efternamn')" oninput="this.setCustomValidity('')" style="width: 49%; float: right;"><br>
+        <input type="text" name="address" placeholder="Adress" required oninvalid="this.setCustomValidity('Fyll i din adress')" oninput="this.setCustomValidity('')" style="width: 100%;"><br>
+        <input type="text" name="postal_code" placeholder="Postnummer" required oninvalid="this.setCustomValidity('Fyll i ditt postnummer')" oninput="this.setCustomValidity('')" style="width: 49%;">
+        <input type="text" name="city" placeholder="Stad" required oninvalid="this.setCustomValidity('Fyll i din stad')" oninput="this.setCustomValidity('')" style="width: 49%; float: right;"><br>
+        <input type="tel" name="mobile" placeholder="Mobilnummer" required oninvalid="this.setCustomValidity('Fyll i ditt mobilnummer')" oninput="this.setCustomValidity('')" style="width: 100%;"><br>
+        <input type="email" name="email" placeholder="E-post" required oninvalid="this.setCustomValidity('Fyll i din e-postadress')" oninput="this.setCustomValidity('')" style="width: 100%;"><br>
         <br>
         <?php if ($show_magazine == '1'): ?>
         <input type="checkbox" name="magazine"> Jag/vi vill ha tidningen<br>
