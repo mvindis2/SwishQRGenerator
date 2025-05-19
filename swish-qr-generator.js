@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const swishNumber = swishQRData.swishNumber;
 
         // Kontrollera om användaren är på en mobil enhet
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const isMobile = /iPhone|Android/i.test(navigator.userAgent);
 
         if (isMobile) {
             const swishData = {

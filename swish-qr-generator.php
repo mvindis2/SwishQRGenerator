@@ -54,17 +54,17 @@ function swish_qr_form_shortcode() {
                         case '0': // Privatperson
                             customAmountField.value = swishQRData.minAmounts.private;
                             customAmountField.min = swishQRData.minAmounts.private;
-                            membershipFee.textContent = 'privatpersoner är ' + swishQRData.minAmounts.private + ' kr';
+                            membershipFee.textContent = 'Minsta belopp för privatpersoner är ' + swishQRData.minAmounts.private + 'kr';
                             break;
                         case '1': // Organisation  
                             customAmountField.value = swishQRData.minAmounts.organisation;
                             customAmountField.min = swishQRData.minAmounts.organisation;
-                            membershipFee.textContent = 'organisationer är ' + swishQRData.minAmounts.organisation + ' kr';
+                            membershipFee.textContent = 'Minsta belopp för organisationer är ' + swishQRData.minAmounts.organisation + 'kr';
                             break;
                         case '2': // Företag
                             customAmountField.value = swishQRData.minAmounts.company;
                             customAmountField.min = swishQRData.minAmounts.company;
-                            membershipFee.textContent = 'företag är ' + swishQRData.minAmounts.company + ' kr';
+                            membershipFee.textContent = 'Minsta belopp för företag är ' + swishQRData.minAmounts.company + 'kr';
                             break;
                     }
                 });
@@ -74,7 +74,7 @@ function swish_qr_form_shortcode() {
         <input type="number" name="amount" value="<?php echo esc_attr($min_amount_private); ?>" style="width: 100%;" min="<?php echo esc_attr($min_amount_private); ?>">
         
         <div id="payment-info" style="margin-top: 10px; margin-bottom: 10px;">
-            <p style="margin: 0; font-size: 12px;">Minsta belopp för <span id="membership-fee">privatpersoner är <?php echo esc_attr($min_amount_private); ?> kr</span></p>
+            <p style="margin: 0; font-size: 12px;" id="membership-fee">Minsta belopp för privatpersoner är <?php echo esc_attr($min_amount_private); ?>kr</p>
         </div>
         <br>
         <?php if ($show_magazine == '1'): ?>
@@ -89,17 +89,17 @@ function swish_qr_form_shortcode() {
         <input type="tel" name="mobile" placeholder="Mobilnummer" required style="width: 100%;"><br>
         <input type="email" name="email" placeholder="E-post" required style="width: 100%;"><br>
         <br>
-        <button type="submit" style="width: 100%; height: 45px;">Gå vidare till betalning</button>
+        <button type="submit" style="width: 100%; height: 45px;">Till betalning</button>
         </form>
     </div>
 
     <!-- QR-kod modalfönster som visas efter formulärsubmit -->
-    <div id="qr-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(168, 14, 68, 1); padding:20px; border-radius:16px; z-index:999; text-align:center; width: 685px; height: 654px;">
-        <div style="background:#fff; padding:20px; border-radius:8px; max-width:100%; max-height:100%; text-align:center; overflow: hidden;">
-            <h2>Skanna QR-koden med Swish för att betala</h2>
-            <img id="qr-image" alt="Genererar QR-kod..." style="max-width:100%; max-height: 450px; height:auto;" />
+    <div id="qr-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(168, 14, 68, 1); padding:16px; border-radius:8px; z-index:999; text-align:center; width: 500px; height: 500px;">
+        <div style="background:rgba(255, 255, 255, 1); padding:16px; border-radius:4px; width:100%; height:100%; text-align:center; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3>Skanna QR-koden med Swish för att betala</h3>
+            <img id="qr-image" alt="Genererar QR-kod..." style="max-width:100%; max-height:100%; height:auto;" />
             <br>
-            <button onclick="document.getElementById('qr-modal').style.display='none'">Stäng</button>
+            <button style="width: 150px; height: 35px;" onclick="document.getElementById('qr-modal').style.display='none'">Stäng</button>
         </div>
     </div>
     <?php
@@ -188,7 +188,7 @@ function handle_swish_qr_request() {
         "payee" => ["value" => $swish_number, "editable" => false],
         "amount" => ["value" => $amount, "editable" => false],
         "message" => ["value" => $name, "editable" => false],
-        "size" => 450,
+        "size" => 300,
         "transparent" => true
     ];
 
