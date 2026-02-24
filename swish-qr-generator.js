@@ -23,23 +23,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const swishNumber = swishQRData.swishNumber;
 
         // Kontrollera om användaren är på en mobil enhet
-        const isMobile = /iPhone|Android/i.test(navigator.userAgent);
-
-        if (isMobile) {
-            const swishData = {
-                version: "1.0",
+        const ua = navigator.userAgent.toLowerCase();
+        const isIphone = ua.includes("iphone");
+        const isAndroid = ua.includes("android");
+        
+        // Mobile enhet
+        if (isIphone || isAndroid) {
+            
+            let swishData = {
+                version: 1,
                 payee: { value: swishNumber },
-                amount: { value: parseFloat(data.amount).toFixed(2) },
                 message: { value: `${data.firstname} ${data.lastname}` }
             };
-            
+        
+            // Inkludera summan på Android
+            if (isAndroid) {
+                swishData.amount = { value: data.amount };
+            }
+        
             const swishUrl = `swish://payment?data=${encodeURIComponent(JSON.stringify(swishData))}`;
             window.location.href = swishUrl;
+        
         } else {
-            // Visa popupfönstret för QR-kod
+            // Desktop – show QR modal as before
             document.getElementById('qr-modal').style.display = 'flex';
-            
-            // Skicka data till servern för att generera QR-kod
+        
             fetch(swishQRData.ajaxUrl + '?action=generate_swish_qr', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
