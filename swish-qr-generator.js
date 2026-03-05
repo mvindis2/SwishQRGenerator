@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const isIphone = ua.includes("iphone");
         const isAndroid = ua.includes("android");
         
-        // Mobile enhet
+        // Mobil enhet
         if (isIphone || isAndroid) {
             
             let swishData = {
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 message: { value: `${data.firstname} ${data.lastname}` }
             };
         
-            // Inkludera summan på Android
+            // Inkludera summan endast på Android
             if (isAndroid) {
                 swishData.amount = { value: data.amount };
             }
@@ -44,8 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const swishUrl = `swish://payment?data=${encodeURIComponent(JSON.stringify(swishData))}`;
             window.location.href = swishUrl;
         
-        } else {
-            // Desktop – show QR modal as before
+        }
+        // Desktop – visa QR-modal
+        else {
             document.getElementById('qr-modal').style.display = 'flex';
         
             fetch(swishQRData.ajaxUrl + '?action=generate_swish_qr', {
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => alert("Kunde inte generera QR-kod"));
         }
 
-        //Skicka e-postnotifiering till admin
+        // Skicka e-postnotifiering till admin
         fetch(swishQRData.ajaxUrl + '?action=send_admin_notification', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
